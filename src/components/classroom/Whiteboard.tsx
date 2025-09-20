@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { clsx } from 'clsx';
 import { WhiteboardToolbar } from './WhiteboardToolbar';
-import { WhiteboardTool, WhiteboardElement } from '../../types';
+import type { WhiteboardTool, WhiteboardElement } from '../../types';
 
 interface WhiteboardProps {
   sessionId: string;
@@ -15,19 +15,16 @@ interface WhiteboardProps {
 }
 
 export const Whiteboard: React.FC<WhiteboardProps> = ({
-  sessionId,
   canEdit,
   elements,
   onElementAdd,
-  onElementUpdate,
-  onElementDelete,
   onClear,
   className
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState<Array<{x: number, y: number}>>([]);
-  const [history, setHistory] = useState<WhiteboardElement[][]>([]);
+  const [history] = useState<WhiteboardElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   
   const [currentTool, setCurrentTool] = useState<WhiteboardTool>({

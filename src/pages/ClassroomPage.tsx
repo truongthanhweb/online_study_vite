@@ -10,10 +10,8 @@ import {
   MessageCircle,
   FileText,
   Users,
-  Settings,
   LogOut,
-  Hand,
-  Gift
+  Hand
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { VideoGrid } from '../components/classroom/VideoGrid';
@@ -22,7 +20,7 @@ import { Whiteboard } from '../components/classroom/Whiteboard';
 import { useAuthStore } from '../store/authStore';
 import { useClassStore } from '../store/classStore';
 import { agoraService } from '../services/agoraService';
-import { Participant, ChatMessage, WhiteboardElement } from '../types';
+import type { Participant, ChatMessage, WhiteboardElement } from '../types';
 import toast from 'react-hot-toast';
 
 export const ClassroomPage: React.FC = () => {
@@ -40,7 +38,7 @@ export const ClassroomPage: React.FC = () => {
 
   // UI state
   const [activePanel, setActivePanel] = useState<'chat' | 'whiteboard' | 'files' | 'participants'>('chat');
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar] = useState(true);
   const [isHandRaised, setIsHandRaised] = useState(false);
 
   // Chat state
@@ -98,7 +96,7 @@ export const ClassroomPage: React.FC = () => {
 
       agoraService.onUserLeft = (uid) => {
         setParticipants(prev => prev.filter(p => p.userId !== uid.toString()));
-        toast.info(`Người dùng ${uid} đã rời khỏi lớp`);
+        toast(`Người dùng ${uid} đã rời khỏi lớp`);
       };
 
       agoraService.onConnectionStateChanged = (state) => {
@@ -185,7 +183,7 @@ export const ClassroomPage: React.FC = () => {
     // In production, notify teacher via WebSocket
   };
 
-  const handleSendGift = (giftType: string, targetUserId: string) => {
+  const handleSendGift = (giftType: string) => {
     toast.success(`Đã tặng ${giftType}!`);
     // In production, send gift via WebSocket
   };
@@ -293,7 +291,7 @@ export const ClassroomPage: React.FC = () => {
           ) : (
             <VideoGrid
               participants={participants}
-              localParticipant={localParticipant}
+              localParticipant={localParticipant || undefined}
               onToggleLocalVideo={handleToggleVideo}
               onToggleLocalAudio={handleToggleAudio}
               className="h-full"

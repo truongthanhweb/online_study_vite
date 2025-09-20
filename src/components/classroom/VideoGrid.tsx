@@ -1,7 +1,7 @@
 import React from 'react';
 import { clsx } from 'clsx';
 import { VideoPlayer } from './VideoPlayer';
-import { Participant } from '../../types';
+import type { Participant } from '../../types';
 
 interface VideoGridProps {
   participants: Participant[];

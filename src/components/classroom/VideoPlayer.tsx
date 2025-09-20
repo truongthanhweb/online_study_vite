@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { clsx } from 'clsx';
-import { Mic, MicOff, Video, VideoOff, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { Participant } from '../../types';
+import type { Participant } from '../../types';
 
 interface VideoPlayerProps {
   participant: Participant;
@@ -20,7 +20,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   isLocal = false,
   isSpeaking = false,
   videoTrack,
-  audioTrack,
   onToggleVideo,
   onToggleAudio,
   className

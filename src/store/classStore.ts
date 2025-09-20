@@ -14,7 +14,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { ClassRoom, ClassSchedule, ClassState } from '../types';
+import type { ClassRoom, ClassSchedule, ClassState } from '../types';
 
 interface ClassStore extends ClassState {
   // Actions
@@ -36,7 +36,7 @@ interface ClassStore extends ClassState {
   getSchedulesByClass: (classId: string) => Promise<ClassSchedule[]>;
 }
 
-export const useClassStore = create<ClassStore>((set, get) => ({
+export const useClassStore = create<ClassStore>((set) => ({
   currentClass: null,
   classes: [],
   isLoading: false,

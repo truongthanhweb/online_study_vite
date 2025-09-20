@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { useAuthStore } from '../../store/authStore';
-import { UserRole } from '../../types';
+import type { UserRole } from '../../types';
 import toast from 'react-hot-toast';
 
 interface RegisterFormProps {

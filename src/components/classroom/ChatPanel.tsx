@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Smile, Hand, Gift } from 'lucide-react';
+import { Send, Smile, Hand } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { ChatMessage } from '../../types';
+import type { ChatMessage } from '../../types';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -138,13 +137,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         <form onSubmit={handleSendMessage} className="space-y-3">
           <div className="flex space-x-2">
             <div className="flex-1 relative">
-              <Input
+              <input
                 ref={inputRef}
                 type="text"
                 placeholder="Nhập tin nhắn..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="pr-10"
+                className="input pr-10"
               />
               <button
                 type="button"

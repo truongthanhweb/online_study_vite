@@ -1,10 +1,10 @@
 import AgoraRTC, { 
-  IAgoraRTCClient, 
-  ICameraVideoTrack, 
-  IMicrophoneAudioTrack,
-  IRemoteVideoTrack,
-  IRemoteAudioTrack,
-  UID
+  type IAgoraRTCClient, 
+  type ICameraVideoTrack, 
+  type IMicrophoneAudioTrack,
+  type IRemoteVideoTrack,
+  type IRemoteAudioTrack,
+  type UID
 } from 'agora-rtc-sdk-ng';
 
 // Agora configuration
@@ -81,7 +81,9 @@ export class AgoraService {
           // Play audio track
           user.audioTrack?.play();
         }
-        this.onUserPublished?.(existingUser, mediaType);
+        if (mediaType !== 'datachannel') {
+          this.onUserPublished?.(existingUser, mediaType);
+        }
       }
     });
 
@@ -98,7 +100,9 @@ export class AgoraService {
           existingUser.audioTrack = undefined;
           existingUser.hasAudio = false;
         }
-        this.onUserUnpublished?.(user.uid, mediaType);
+        if (mediaType !== 'datachannel') {
+          this.onUserUnpublished?.(user.uid, mediaType);
+        }
       }
     });
 
@@ -305,9 +309,15 @@ export class AgoraService {
       }
 
       // Handle screen share ended
-      screenTrack.on('track-ended', async () => {
-        await this.stopScreenShare();
-      });
+      if (Array.isArray(screenTrack)) {
+        screenTrack[0].on('track-ended', async () => {
+          await this.stopScreenShare();
+        });
+      } else {
+        screenTrack.on('track-ended', async () => {
+          await this.stopScreenShare();
+        });
+      }
 
     } catch (error) {
       console.error('Failed to start screen share:', error);

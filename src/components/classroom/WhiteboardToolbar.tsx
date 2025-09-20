@@ -11,11 +11,10 @@ import {
   Square, 
   Triangle,
   Ruler,
-  MousePointer,
   Zap
 } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { WhiteboardTool } from '../../types';
+import type { WhiteboardTool } from '../../types';
 
 interface WhiteboardToolbarProps {
   currentTool: WhiteboardTool;
