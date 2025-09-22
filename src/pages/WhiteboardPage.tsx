@@ -1,33 +1,34 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { 
-  Pen, 
-  Type, 
-  Eraser, 
-  Undo, 
-  Redo, 
-  Trash2, 
-  Upload,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
+import {
+  Pen,
   Square,
   Circle,
   Triangle,
-  Minus,
-  ChevronUp,
-  ChevronDown,
-  FolderOpen,
+  Type,
+  Eraser,
+  Undo,
+  Redo,
+  Trash2,
+  Save,
+  Download,
+  Palette,
+  Settings,
   Video,
   VideoOff,
-  Users,
-  Maximize2,
-  Minimize2
+  FileText,
+  Image,
+  Minus,
+  FolderOpen,
+  ZoomOut,
+  ZoomIn,
+  RotateCcw
 } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import DocumentLoader from '../components/whiteboard/DocumentLoader';
 import VideoConference from '../components/video/VideoConference';
 import { useAuthStore } from '../store/authStore';
+import { socketService } from '../services/socketService';
 
 interface Point {
   x: number;
@@ -53,6 +54,10 @@ type Tool = 'pen' | 'text' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'l
 export const WhiteboardPage: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
   const { user } = useAuthStore();
+  
+  // Check if user can edit (only admin and teacher can edit)
+  const canEdit = user?.role === 'admin' || user?.role === 'teacher';
+  const isStudent = user?.role === 'student';
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,6 +87,68 @@ export const WhiteboardPage: React.FC = () => {
   const [loadedImageUrls, setLoadedImageUrls] = useState<string[]>([]);
   const [showVideoConference, setShowVideoConference] = useState(false);
   const [videoMode, setVideoMode] = useState<'minimized' | 'split' | 'fullscreen'>('minimized');
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (classId && user) {
+      console.log('Initializing socket connection for:', user.full_name, 'in room:', classId);
+      
+      // Connect to socket server
+      const socket = socketService.connect('http://localhost:3001');
+      
+      // Wait for connection before joining room
+      socket.on('connect', () => {
+        console.log('Socket connected, joining room...');
+        setIsSocketConnected(true);
+        socketService.joinRoom(classId, user.full_name, user.role);
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+        setIsSocketConnected(false);
+      });
+      
+      // Set up event listeners
+      socketService.onDrawingElement((element: DrawingElement) => {
+        console.log('🎨 STUDENT RECEIVED drawing element:', element);
+        console.log('🎨 Current elements before:', elements.length);
+        setElements(prev => {
+          const newElements = [...prev, element];
+          console.log('🎨 Current elements after:', newElements.length);
+          return newElements;
+        });
+      });
+      
+      socketService.onClearCanvas(() => {
+        console.log('Received clear canvas command');
+        setElements([]);
+        setHistory([]);
+        setHistoryIndex(-1);
+      });
+      
+      socketService.onUserJoined((data) => {
+        console.log(`${data.userName} joined the whiteboard`);
+        setOnlineUsers(prev => [...prev, data.userName]);
+      });
+      
+      socketService.onUserLeft((data) => {
+        console.log(`${data.userName} left the whiteboard`);
+        setOnlineUsers(prev => prev.filter(name => name !== data.userName));
+      });
+      
+      return () => {
+        console.log('Cleaning up socket connection');
+        if (classId) {
+          socketService.leaveRoom(classId);
+        }
+        socketService.removeAllListeners();
+        socketService.disconnect();
+        setIsSocketConnected(false);
+      };
+    }
+  }, [classId, user]);
 
   // Initialize PDF.js
   useEffect(() => {
@@ -1056,6 +1123,9 @@ export const WhiteboardPage: React.FC = () => {
 
   // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    // Only allow editing for admin and teacher
+    if (!canEdit) return;
+    
     const pos = getMousePos(e);
     setStartPoint(pos);
 
@@ -1087,7 +1157,7 @@ export const WhiteboardPage: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+    if (!canEdit || !isDrawing) return;
 
     const pos = getMousePos(e);
 
@@ -1099,7 +1169,7 @@ export const WhiteboardPage: React.FC = () => {
   };
 
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !startPoint) return;
+    if (!canEdit || !isDrawing || !startPoint) return;
 
     const pos = getMousePos(e);
 
@@ -1116,6 +1186,12 @@ export const WhiteboardPage: React.FC = () => {
           };
           setElements(prev => [...prev, newElement]);
           saveToHistory();
+          
+          // Send to other users via socket
+          if (classId) {
+            console.log('Sending drawing element to room:', classId, newElement);
+            socketService.sendDrawingElement(classId, newElement);
+          }
         }
         break;
 
@@ -1138,6 +1214,11 @@ export const WhiteboardPage: React.FC = () => {
         };
         setElements(prev => [...prev, newShape]);
         saveToHistory();
+        
+        // Send to other users via socket
+        if (classId) {
+          socketService.sendDrawingElement(classId, newShape);
+        }
         break;
 
       case 'line':
@@ -1151,6 +1232,11 @@ export const WhiteboardPage: React.FC = () => {
         };
         setElements(prev => [...prev, newLine]);
         saveToHistory();
+        
+        // Send to other users via socket
+        if (classId) {
+          socketService.sendDrawingElement(classId, newLine);
+        }
         break;
 
       case 'eraser':
@@ -1207,6 +1293,11 @@ export const WhiteboardPage: React.FC = () => {
       setTotalPages(0);
       setCurrentPage(1);
       saveToHistory();
+      
+      // Send clear command to other users via socket
+      if (classId) {
+        socketService.sendClearCanvas(classId);
+      }
     }
   };
 
@@ -1243,7 +1334,25 @@ export const WhiteboardPage: React.FC = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b p-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">🎨 Bảng Trắng Tương Tác</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">🎨 Bảng Trắng Tương Tác</h1>
+            {isStudent && (
+              <p className="text-sm text-gray-600 mt-1">
+                👀 Chế độ xem - Chỉ giáo viên mới có thể viết trên bảng
+              </p>
+            )}
+            <div className="flex items-center gap-2 mt-1">
+              <div className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-xs text-gray-500">
+                {isSocketConnected ? 'Realtime connected' : 'Connecting...'}
+              </span>
+              {onlineUsers.length > 0 && (
+                <span className="text-xs text-blue-600 ml-2">
+                  👥 {onlineUsers.length + 1} online
+                </span>
+              )}
+            </div>
+          </div>
           
           <div className="flex items-center space-x-2">
             {/* PDF Navigation */}
@@ -1255,28 +1364,30 @@ export const WhiteboardPage: React.FC = () => {
               </div>
             )}
             
-            <button
-              onClick={() => setShowDocumentLoader(true)}
-              disabled={isUploading || !classId}
-              className={`flex items-center space-x-2 px-3 py-2 rounded transition-colors ${
-                isUploading || !classId
-                  ? 'bg-gray-400 text-white cursor-not-allowed' 
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-              title={!classId ? 'Cần có ID lớp học để tải tài liệu' : 'Tải tài liệu từ hệ thống'}
-            >
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Đang tải... {uploadProgress}%</span>
-                </>
-              ) : (
-                <>
-                  <FolderOpen className="h-4 w-4" />
-                  <span>Tải tài liệu</span>
-                </>
-              )}
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => setShowDocumentLoader(true)}
+                disabled={isUploading || !classId}
+                className={`flex items-center space-x-2 px-3 py-2 rounded transition-colors ${
+                  isUploading || !classId
+                    ? 'bg-gray-400 text-white cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                title={!classId ? 'Cần có ID lớp học để tải tài liệu' : 'Tải tài liệu từ hệ thống'}
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Đang tải... {uploadProgress}%</span>
+                  </>
+                ) : (
+                  <>
+                    <FolderOpen className="h-4 w-4" />
+                    <span>Tải tài liệu</span>
+                  </>
+                )}
+              </button>
+            )}
             
             <button
               onClick={() => setShowVideoConference(!showVideoConference)}
@@ -1300,19 +1411,22 @@ export const WhiteboardPage: React.FC = () => {
               )}
             </button>
             
-            <button
-              onClick={handleClear}
-              className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Xóa tất cả</span>
-            </button>
+            {canEdit && (
+              <button
+                onClick={handleClear}
+                className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Xóa tất cả</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Toolbar */}
-      <div className="bg-white border-b p-4">
+      {/* Toolbar - Only show for admin and teacher */}
+      {canEdit && (
+        <div className="bg-white border-b p-4">
         <div className="flex items-center justify-between">
           {/* Tools */}
           <div className="flex items-center space-x-2">
@@ -1417,7 +1531,8 @@ export const WhiteboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
@@ -1429,7 +1544,7 @@ export const WhiteboardPage: React.FC = () => {
           />
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full cursor-crosshair"
+            className={`absolute inset-0 w-full h-full ${canEdit ? 'cursor-crosshair' : 'cursor-default'}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

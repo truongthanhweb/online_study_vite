@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket Test</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Socket.IO Test</h1>
+    <div id="status">Connecting...</div>
+    <button onclick="sendTest()">Send Test Drawing</button>
+    <div id="messages"></div>
+
+    <script>
+        const socket = io('http://localhost:3001');
+        const messages = document.getElementById('messages');
+        const status = document.getElementById('status');
+
+        function addMessage(msg) {
+            const div = document.createElement('div');
+            div.textContent = new Date().toLocaleTimeString() + ': ' + msg;
+            messages.appendChild(div);
+        }
+
+        socket.on('connect', () => {
+            status.textContent = 'Connected ✅';
+            addMessage('Connected to server');
+            
+            // Join room
+            socket.emit('join-room', { 
+                roomId: '1', 
+                userName: 'Test User', 
+                userRole: 'teacher' 
+            });
+            addMessage('Joined room 1');
+        });
+
+        socket.on('disconnect', () => {
+            status.textContent = 'Disconnected ❌';
+            addMessage('Disconnected from server');
+        });
+
+        socket.on('drawing-element', (element) => {
+            addMessage('📝 Received drawing: ' + JSON.stringify(element));
+        });
+
+        socket.on('user-joined', (data) => {
+            addMessage('👋 User joined: ' + data.userName);
+        });
+
+        function sendTest() {
+            const testElement = {
+                id: Date.now().toString(),
+                type: 'pen',
+                points: [{ x: 100, y: 100 }, { x: 200, y: 200 }],
+                color: '#ff0000',
+                size: 3,
+                timestamp: Date.now()
+            };
+            
+            socket.emit('drawing-element', { 
+                roomId: '1', 
+                element: testElement 
+            });
+            addMessage('📤 Sent test drawing');
+        }
+    </script>
+</body>
+</html>

@@ -1,15 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  Mic, 
-  MicOff, 
-  Video, 
-  VideoOff, 
-  PhoneOff, 
-  Users,
-  MessageSquare,
-  Monitor,
-  Settings
-} from 'lucide-react';
+import { Users } from 'lucide-react';
 
 interface VideoConferenceProps {
   roomName: string;
@@ -34,9 +24,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
   const jitsiContainerRef = useRef<HTMLDivElement>(null);
   const [isJitsiLoaded, setIsJitsiLoaded] = useState(false);
   const [participantCount, setParticipantCount] = useState(1);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [isVideoMuted, setIsVideoMuted] = useState(false);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  // Removed custom controls state since Jitsi has its own toolbar
 
   useEffect(() => {
     loadJitsiMeet();
@@ -155,25 +143,17 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
 
       window.jitsiAPI.addEventListener('participantJoined', (participant: any) => {
         console.log('Participant joined:', participant);
-        setParticipantCount(prev => prev + 1);
       });
 
       window.jitsiAPI.addEventListener('participantLeft', (participant: any) => {
         console.log('Participant left:', participant);
-        setParticipantCount(prev => Math.max(1, prev - 1));
       });
 
-      window.jitsiAPI.addEventListener('audioMuteStatusChanged', (data: any) => {
-        setIsAudioMuted(data.muted);
+      window.jitsiAPI.addEventListener('videoConferenceLeft', (data: any) => {
+        setParticipantCount(data.participantCount || 1);
       });
 
-      window.jitsiAPI.addEventListener('videoMuteStatusChanged', (data: any) => {
-        setIsVideoMuted(data.muted);
-      });
-
-      window.jitsiAPI.addEventListener('screenSharingStatusChanged', (data: any) => {
-        setIsScreenSharing(data.on);
-      });
+      // Removed custom event listeners since we use Jitsi's built-in controls
 
       window.jitsiAPI.addEventListener('readyToClose', () => {
         console.log('Jitsi ready to close');
@@ -187,35 +167,7 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
     }
   };
 
-  const toggleAudio = () => {
-    if (window.jitsiAPI) {
-      window.jitsiAPI.executeCommand('toggleAudio');
-    }
-  };
-
-  const toggleVideo = () => {
-    if (window.jitsiAPI) {
-      window.jitsiAPI.executeCommand('toggleVideo');
-    }
-  };
-
-  const toggleScreenShare = () => {
-    if (window.jitsiAPI) {
-      window.jitsiAPI.executeCommand('toggleShareScreen');
-    }
-  };
-
-  const hangUp = () => {
-    if (window.jitsiAPI) {
-      window.jitsiAPI.executeCommand('hangup');
-    }
-  };
-
-  const openChat = () => {
-    if (window.jitsiAPI) {
-      window.jitsiAPI.executeCommand('toggleChat');
-    }
-  };
+  // Removed custom control functions since Jitsi has built-in toolbar
 
   const getRoleColor = () => {
     switch (userRole) {
@@ -343,129 +295,11 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
         )}
       </div>
 
-      {/* Quick Controls (only show when loaded) */}
-      {isJitsiLoaded && (
-        <div style={{
-          position: 'absolute',
-          bottom: '16px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '8px',
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          padding: '8px',
-          borderRadius: '24px',
-          backdropFilter: 'blur(8px)'
-        }}>
-          <button
-            onClick={toggleAudio}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: isAudioMuted ? '#ef4444' : '#374151',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            title={isAudioMuted ? 'Bật mic' : 'Tắt mic'}
-          >
-            {isAudioMuted ? <MicOff size={20} /> : <Mic size={20} />}
-          </button>
-
-          <button
-            onClick={toggleVideo}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: isVideoMuted ? '#ef4444' : '#374151',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            title={isVideoMuted ? 'Bật camera' : 'Tắt camera'}
-          >
-            {isVideoMuted ? <VideoOff size={20} /> : <Video size={20} />}
-          </button>
-
-          {(userRole === 'admin' || userRole === 'teacher') && (
-            <button
-              onClick={toggleScreenShare}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                border: 'none',
-                backgroundColor: isScreenSharing ? '#3b82f6' : '#374151',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              title="Chia sẻ màn hình"
-            >
-              <Monitor size={20} />
-            </button>
-          )}
-
-          <button
-            onClick={openChat}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: '#374151',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            title="Mở chat"
-          >
-            <MessageSquare size={20} />
-          </button>
-
-          <button
-            onClick={hangUp}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            title="Rời cuộc họp"
-          >
-            <PhoneOff size={20} />
-          </button>
-        </div>
-      )}
-
       {/* CSS Animation */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+{{ ... }}
         }
       `}</style>
     </div>

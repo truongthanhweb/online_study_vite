@@ -5,8 +5,6 @@ import {
   Download, 
   Eye, 
   X,
-  ChevronLeft,
-  ChevronRight,
   Loader
 } from 'lucide-react';
 import { documentsApi, handleApiError, downloadFile, type Document } from '../../services/api';

@@ -1,235 +1,77 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import WhiteboardPage from './pages/WhiteboardPage';
-import SystemStatus from './pages/SystemStatus';
-import VideoDemo from './pages/VideoDemo';
-import AdminLayout from './components/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './store/authStore';
+
+// Auth pages
+import LoginPage from './pages/auth/LoginPage';
+
+// Admin pages
+import AdminDashboard from './pages/admin/AdminDashboard_real';
 import DocumentManagement from './pages/admin/DocumentManagement';
 import ClassManagement from './pages/admin/ClassManagement';
 import UserManagement from './pages/admin/UserManagement';
 
-// Simple Login Page
-function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<'admin' | 'teacher' | 'student' | null>(null);
+// Teacher pages
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
 
-  const handleRoleSelect = (role: 'admin' | 'teacher' | 'student') => {
-    setSelectedRole(role);
-    // In a real app, this would authenticate with backend
-    localStorage.setItem('userRole', role);
-    localStorage.setItem('isAuthenticated', 'true');
-  };
+// Student pages
+import StudentDashboard from './pages/student/StudentDashboard';
 
-  const testBackend = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/health');
-      const data = await response.json();
-      alert('✅ Backend connection successful!\n' + JSON.stringify(data, null, 2));
-    } catch (error) {
-      alert('❌ Backend connection failed:\n' + error);
-    }
-  };
+// Classroom
+import ClassroomPage from './pages/classroom/ClassroomPage';
 
-  return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
-      <div style={{ 
-        width: '100%', 
-        maxWidth: '500px',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '40px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ 
-            fontSize: '32px', 
-            fontWeight: 'bold', 
-            color: '#1f2937',
-            marginBottom: '8px'
-          }}>
-            🎓 Online Study System
-          </h1>
-          <p style={{ color: '#6b7280', fontSize: '16px' }}>
-            Hệ thống quản lý tài liệu học tập trực tuyến
-          </p>
-        </div>
-        
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{ 
-            fontSize: '20px', 
-            fontWeight: '600', 
-            marginBottom: '20px',
-            textAlign: 'center',
-            color: '#374151'
-          }}>
-            Chọn vai trò để truy cập
-          </h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <Link 
-              to="/admin"
-              onClick={() => handleRoleSelect('admin')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '16px',
-                backgroundColor: '#dc2626',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-            >
-              <span style={{ fontSize: '20px' }}>👨‍💼</span>
-              <span>Admin Panel - Quản lý hệ thống</span>
-            </Link>
-            
-            <Link 
-              to="/whiteboard/1"
-              onClick={() => handleRoleSelect('teacher')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '16px',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-            >
-              <span style={{ fontSize: '20px' }}>👨‍🏫</span>
-              <span>Teacher - Whiteboard Lớp 1</span>
-            </Link>
-            
-            <Link 
-              to="/whiteboard/2"
-              onClick={() => handleRoleSelect('student')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '16px',
-                backgroundColor: '#059669',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#047857'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-            >
-              <span style={{ fontSize: '20px' }}>👨‍🎓</span>
-              <span>Student - Whiteboard Lớp 2</span>
-            </Link>
-            
-            <Link 
-              to="/video-demo"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '16px',
-                backgroundColor: '#7c3aed',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#6d28d9'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
-            >
-              <span style={{ fontSize: '20px' }}>🎥</span>
-              <span>Video Conference Demo</span>
-            </Link>
-          </div>
-        </div>
-        
-        <div style={{ 
-          marginTop: '30px', 
-          paddingTop: '20px', 
-          borderTop: '1px solid #e5e7eb' 
-        }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-            <button 
-              onClick={testBackend}
-              style={{
-                flex: 1,
-                padding: '12px',
-                backgroundColor: '#6b7280',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              🔗 Test API
-            </button>
-            
-            <Link
-              to="/status"
-              style={{
-                flex: 1,
-                padding: '12px',
-                backgroundColor: '#059669',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                textAlign: 'center',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              📊 System Status
-            </Link>
-          </div>
-          
-          <div style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center' }}>
-            <p><strong>Demo Accounts:</strong></p>
-            <p>Admin: admin@school.edu.vn / admin123</p>
-            <p>Teacher: teacher1@school.edu.vn / teacher123</p>
-            <p>Student: student1@school.edu.vn / student123</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Other pages
+import SystemStatus from './pages/SystemStatus';
+import VideoDemo from './pages/VideoDemo';
+import WhiteboardPage from './pages/WhiteboardPage';
+import SocketDebug from './pages/SocketDebug';
 
 // Protected Route Component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: ('admin' | 'teacher' | 'student')[];
+}
+
+function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { isAuthenticated, user } = useAuthStore();
   
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    // Redirect to appropriate dashboard based on user role
+    switch (user.role) {
+      case 'admin':
+        return <Navigate to="/admin/dashboard" replace />;
+      case 'teacher':
+        return <Navigate to="/teacher/dashboard" replace />;
+      case 'student':
+        return <Navigate to="/student/dashboard" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  }
+  
+  return <>{children}</>;
+}
+
+// Public Route Component (redirect if already logged in)
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore();
+  
+  if (isAuthenticated && user) {
+    // Redirect to appropriate dashboard
+    switch (user.role) {
+      case 'admin':
+        return <Navigate to="/admin/dashboard" replace />;
+      case 'teacher':
+        return <Navigate to="/teacher/dashboard" replace />;
+      case 'student':
+        return <Navigate to="/student/dashboard" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
   }
   
   return <>{children}</>;
@@ -240,16 +82,89 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Home/Login Page */}
-          <Route path="/" element={<LoginPage />} />
+          {/* Public Routes */}
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } 
+          />
           
-          {/* System Status Page */}
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          
+          {/* System Status (public) */}
           <Route path="/status" element={<SystemStatus />} />
-          
-          {/* Video Demo Page */}
           <Route path="/video-demo" element={<VideoDemo />} />
+          <Route path="/socket-debug" element={<SocketDebug />} />
           
-          {/* Whiteboard Routes */}
+          {/* Admin Routes */}
+          <Route 
+            path="/admin/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/classes" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ClassManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/documents" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DocumentManagement />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Teacher Routes */}
+          <Route 
+            path="/teacher/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['teacher']}>
+                <TeacherDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Student Routes */}
+          <Route 
+            path="/student/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Classroom Routes (Teacher and Student) */}
+          <Route 
+            path="/classroom/:classId" 
+            element={
+              <ProtectedRoute allowedRoles={['teacher', 'student']}>
+                <ClassroomPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Whiteboard Routes (for backward compatibility) */}
           <Route 
             path="/whiteboard/:classId" 
             element={
@@ -259,23 +174,8 @@ function App() {
             } 
           />
           
-          {/* Admin Routes */}
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="documents" element={<DocumentManagement />} />
-            <Route path="classes" element={<ClassManagement />} />
-            <Route path="users" element={<UserManagement />} />
-          </Route>
-          
           {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
     </Router>
